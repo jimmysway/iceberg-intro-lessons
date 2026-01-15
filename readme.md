@@ -1,35 +1,43 @@
-# Directions
+# Apache Iceberg - Production Stack with JDBC Catalog
 
-To start up the different containers individually.
 
-spark 3.3 with jupyter notebook
+- **Spark Notebook** - Includes Spark SQL (query engine built-in, no separate service)
+- **MinIO** - S3-compatible object storage (development only - use S3 in production)
+- **PostgreSQL** - JDBC Catalog for Iceberg metadata (simple, production-ready)
 
-```
-docker-compose up notebook
-```
+## Quick Start
 
-minio (s3-compatible storage layer)
+Start all services:
 
-```
-docker-compose up minio
-```
-
-nessie (transactional catalog for Apache Iceberg)
-
-```
-docker-compose up nessie
+```bash
+docker-compose up -d
 ```
 
-Dremio (data lakehouse platform (query engine, access layer, more))
+## Access Points
 
-```
-docker-compose up dremio
-```
+- **Jupyter Lab**: http://localhost:8888 (no password required)
+- **MinIO Console**: http://localhost:9001 (admin/password)
+- **MinIO API**: http://localhost:9000
+- **PostgreSQL**: localhost:5432 (user: iceberg, password: iceberg, database: iceberg)
 
-There are three folders in this repo mapped specifically to the spark/notebook container which are:
+## Directory Structure
 
-- `datasets` use this for any sample datasets
-- `notebooks` for storing notebooks
-- `warehouse` to be used as a warehouse for written data
+- `datasets/` - Sample CSV datasets from Kaggle
+- `notebooks/` - Jupyter notebooks (start with `demo1_jdbc_catalog.ipynb`)
 
-[Find Guides and Tutorials Here](https://github.com/developer-advocacy-dremio/quick-guides-from-dremio)
+## Getting Started
+
+1. **Start services**:
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Open Jupyter Lab**: http://localhost:8888
+
+3. **Run the JDBC Catalog lesson**:
+   - Open `work/demo1_jdbc_catalog.ipynb`
+   - Run all cells to learn JDBC Catalog
+
+- [Apache Iceberg Documentation](https://iceberg.apache.org/)
+- [JDBC Catalog Docs](https://iceberg.apache.org/docs/latest/jdbc/)
+- [Spark SQL Documentation](https://spark.apache.org/docs/latest/sql-programming-guide.html)
