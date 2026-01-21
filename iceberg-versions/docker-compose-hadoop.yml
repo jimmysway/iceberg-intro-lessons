@@ -1,0 +1,30 @@
+services:
+  # ----------------------------
+  # Hadoop catalog stack (Spark + Iceberg Hadoop catalog + Backblaze B2)
+  # Enable: docker compose -f docker-compose-hadoop.yml --profile hadoop up -d
+  # ----------------------------
+  notebook_hadoop:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    profiles: ["hadoop"]
+    networks: [iceberg_hadoop]
+    env_file:
+      - ./.env
+    volumes:
+      - ../warehouse:/home/jovyan/warehouse
+      - ../notebooks-hadoop:/home/jovyan/notebooks-hadoop
+      - ../datasets:/home/jovyan/datasets
+    environment:
+      - AWS_ACCESS_KEY_ID=${B2_APPLICATION_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${B2_APPLICATION_KEY}
+      - AWS_REGION=${B2_REGION:-us-west-001}
+      - AWS_DEFAULT_REGION=${B2_REGION:-us-west-001}
+      - B2_S3_ENDPOINT=${B2_S3_ENDPOINT:-https://s3.us-west-001.backblazeb2.com}
+      - JUPYTER_ENABLE_LAB=yes
+    ports:
+      - 8890:8888
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+
+networks:
+  iceberg_hadoop:
+    driver: bridge
+

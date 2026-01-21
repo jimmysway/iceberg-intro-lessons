@@ -1,0 +1,77 @@
+services:
+  # ----------------------------
+  # JDBC catalog stack (Spark + Iceberg JDBC catalog + MinIO)
+  # Enable base only:  docker compose --profile jdbc up -d
+  # Enable w/ notebook: docker compose --profile jdbc-notebook up -d
+  # ----------------------------
+  postgres_jdbc:
+    image: postgres:13-alpine
+    profiles: ["jdbc"]
+    networks: [iceberg_jdbc]
+    environment:
+      - POSTGRES_DB=iceberg
+      - POSTGRES_USER=iceberg
+      - POSTGRES_PASSWORD=iceberg
+    command:
+      - postgres
+      - -c
+      - max_connections=50
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - default_transaction_isolation=read_committed
+      - -c
+      - max_prepared_transactions=20
+    volumes:
+      - postgres_jdbc_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iceberg"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio_jdbc:
+    image: minio/minio:latest
+    profiles: ["jdbc"]
+    networks: [iceberg_jdbc]
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password
+      - MINIO_REGION_NAME=us-east-1
+    ports:
+      - 9001:9001
+      - 9000:9000
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_jdbc_data:/data
+
+  notebook_jdbc:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    profiles: ["jdbc"]
+    networks: [iceberg_jdbc]
+    volumes:
+      - ../warehouse:/home/jovyan/warehouse
+      - ../notebooks-jdbc:/home/jovyan/notebooks-jdbc
+      - ../datasets:/home/jovyan/datasets
+    environment:
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=password
+      - AWS_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      - JUPYTER_ENABLE_LAB=yes
+    ports:
+      - 8888:8888
+    depends_on:
+      - postgres_jdbc
+      - minio_jdbc
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+
+networks:
+  iceberg_jdbc:
+    driver: bridge
+
+volumes:
+  postgres_jdbc_data:
+  minio_jdbc_data:
